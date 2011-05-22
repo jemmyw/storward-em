@@ -5,4 +5,4 @@ require 'bundler/setup'
 require 'storward'
 load 'config.rb'
 
-Storward::Server.run
+Storward.run

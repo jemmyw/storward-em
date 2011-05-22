@@ -3,12 +3,8 @@ module Storward
     include EventMachine::HttpServer
 
     def self.run
-      EventMachine::run do
-        EventMachine.epoll
-        EventMachine::start_server("0.0.0.0", configuration.port, self)
-
-        puts "Listening on 0.0.0.0:#{configuration.port}"
-      end
+      EventMachine::start_server("0.0.0.0", configuration.port, self)
+      puts "Listening on 0.0.0.0:#{configuration.port}"
     end      
 
     def self.configure
