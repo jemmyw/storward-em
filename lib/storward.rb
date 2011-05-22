@@ -4,7 +4,6 @@ require 'em-http'
 require 'em-mongo'
 require 'addressable/uri'
 require 'logger'
-require 'ruby-debug'
 
 dir = File.join(File.dirname(__FILE__), 'storward')
 
