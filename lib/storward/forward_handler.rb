@@ -24,7 +24,10 @@ module Storward
 
     def handler_event
       if @request_saved
-        if !forward.proxy? || @request_proxied
+        if !forward.proxy?
+          @response.status = 200
+          self.succeed
+        elsif @request_proxied
           request.proxying = false
           request.save.tap do |saver|
             saver.callback { self.succeed }

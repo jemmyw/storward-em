@@ -4,7 +4,7 @@ module Storward
 
     def self.run
       EventMachine::start_server("0.0.0.0", configuration.port, self)
-      puts "Listening on 0.0.0.0:#{configuration.port}"
+      Storward.logger("access").info "Listening on 0.0.0.0:#{configuration.port}"
     end      
 
     def self.configure
@@ -31,16 +31,21 @@ module Storward
         handler = forward.handle(request, response)
         handler.callback do
           response.send_response
+          Storward.logger("access").info "#{request.method} to #{request.path_info} handled successfully. Status code: #{response.status}"
         end
         handler.errback do |error|
           response.status = 500
           response.content = error
           response.send_response
+          
+          Storward.logger("access").info "#{request.method} to #{request.path_info} handled unsuccessfully. Status code: 500. Error: #{error.to_s}"
         end
       else
         response.status = 404
         response.content = "File not found"
         response.send_response
+
+        Storward.logger("access").info "#{request.method} to #{request.path_info} unknown. Status code: 404"
       end
     end
   end

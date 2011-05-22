@@ -23,7 +23,7 @@ module Storward
   module_function :run
 
   def log_error(log_type, message, error)
-    logger = Logger.new(Storward::Server.configuration.send("#{log_type}_log") || "#{log_type}.log")
+    logger = Storward.logger(log_type)
     logger.error message
 
     if error
@@ -32,4 +32,9 @@ module Storward
     end
   end
   module_function :log_error
+
+  def logger(log_type)
+    Logger.new(Storward::Server.configuration.send("#{log_type}_log") || $stdout)
+  end
+  module_function :logger
 end

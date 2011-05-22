@@ -4,26 +4,43 @@ module Storward
       include EventMachine::Deferrable
 
       attr_accessor :request
+      attr_accessor   :started_at
 
       def initialize(request)
         begin
+          self.started_at = Time.now
           self.request = request
-          
+
           conf = Storward::Server.configuration
 
           @cn = EM::Mongo::Connection.new(conf.mongo_host || "localhost")
-          @db = @cn.db(conf.mongo_db || "storward")
-          @collection = @db.collection("requests")
-          @doc = request.to_hash.dup
 
-          if request.new_record?
-            insert
-          else
-            update
+          check_connection do
+            @db = @cn.db(conf.mongo_db || "storward")
+            @collection = @db.collection("requests")
+            @doc = request.to_hash.dup
+
+            if request.new_record?
+              insert
+            else
+              update
+            end
           end
         rescue Exception => e
           fail(e)
         end
+      end
+
+      def check_connection(&blk)
+        if @cn.connected?
+          yield
+        else
+          if Time.now - started_at > 2
+            fail(Exception.new("Could not connect to MongoDB"))
+          else
+            EM.next_tick { check_connection(&blk) }
+          end
+        end 
       end
 
       def insert
@@ -81,7 +98,7 @@ module Storward
           yield nil
         end
       end
-        
+
       cn.close
     end
 
@@ -110,7 +127,7 @@ module Storward
         %w(attempts sent proxying worker_id response_content response_header response_status).each do |name|
           hash[name.to_sym] = self.send(name)
         end
-        
+
         ATTRIBUTES.each do |a|
           hash[a] = self.send(a)
         end
@@ -129,7 +146,6 @@ module Storward
     end
 
     def forward
-      puts "Sending request #{path_info}"
       self.attempts += 1
 
       request_options = {
@@ -138,7 +154,7 @@ module Storward
         :redirects => 0
       }
       request_options[:body] = content if method =~ /post|put/
-      uri = to.dup
+        uri = to.dup
       uri.path = path_info
 
       EventMachine::HttpRequest.new(uri).send(method, request_options).tap do |http|
