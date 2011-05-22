@@ -2,3 +2,4 @@
 .rvmrc
 startmongo
 config.rb
+cloudinit
