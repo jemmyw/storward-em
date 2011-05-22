@@ -3,6 +3,6 @@
 require 'rubygems'
 require 'bundler/setup'
 require 'storward'
-load 'config.rb'
+load File.join(File.dirname(__FILE__), "config.rb")
 
 Storward.run
