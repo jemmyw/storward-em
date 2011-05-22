@@ -1,5 +1,5 @@
 .bundle
 .rvmrc
 startmongo
-config.rb
+/config.rb
 cloudinit
