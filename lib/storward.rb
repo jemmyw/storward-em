@@ -13,6 +13,10 @@ end
 
 module Storward
   def run
+    Signal.trap("TERM") do
+      EM.stop
+    end
+
     EventMachine::run do
       EventMachine.epoll
       Storward::Server.run
