@@ -2,14 +2,16 @@ module Storward
   class Forward
     extend Property
 
-    attr_accessor :paths
+    attr_accessor :path
+    attr_accessor :methods
+    attr_accessor :config
 
-    property :method, :splat => true
-    property :to, :proxy, :forward_on_error
+    def initialize(path, options = {})
+      self.path = path
+      self.methods = options.delete(:method).to_a
+      self.methods += options.delete(:methods).to_a
 
-    def initialize(*paths)
-      self.paths = paths.flatten
-      instance_eval &Proc.new
+      self.config = Proc.new
     end
 
     def handles?(request)
@@ -17,13 +19,11 @@ module Storward
     end
 
     def path_match?(path_info)
-      paths.any? do |path|
-        path_info =~ path
-      end
+      path_info =~ path
     end
 
     def method_match?(request_method)
-      method.map(&:to_s).map(&:downcase).include?(request_method.to_s.downcase)
+      methods.nil? || methods.empty? || methods.map(&:to_s).map(&:downcase).include?(request.method.to_s.downcase)
     end
 
     def uri
@@ -31,7 +31,8 @@ module Storward
     end
 
     def handle(request, response)
-      ForwardHandler.new(self, request, response)
+      matches = path.match(request.path_info).to_a[1..-1]
+      ForwardHandler.new(matches, request, response, &config)
     end
   end
 end

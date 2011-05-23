@@ -16,8 +16,8 @@ module Storward
       instance_eval &Proc.new
     end
 
-    def forward(*paths)
-      @forwards << Forward.new(*paths, &Proc.new)
+    def forward(path)
+      @forwards << Forward.new(path, &Proc.new)
     end
   end
 end

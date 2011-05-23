@@ -1,13 +1,17 @@
 module Storward
   class ForwardHandler
     include EM::Deferrable
+    extend Property
 
-    attr_reader :forward, :request, :response
+    attr_reader :request, :response
 
-    def initialize(forward, request, response)
-      @forward = forward
+    property :to, :proxy
+
+    def initialize(matches, request, response)
       @request = request
       @response = response
+
+      instance_exec *matches, &Proc.new
 
       @request_saved = false
       @request_proxied = false
@@ -15,16 +19,16 @@ module Storward
       @request_not_saved = false
       @request_not_proxied = false
 
-      @request.to = @forward.uri
-      @request.proxying = forward.proxy?
+      @request.to = Addressable::URI.parse(self.to)
+      @request.proxying = proxy?
 
       save_request
-      proxy_request if forward.proxy?
+      proxy_request if proxy?
     end
 
     def handler_event
       if @request_saved
-        if !forward.proxy?
+        if !proxy?
           @response.status = 200
           self.succeed
         elsif @request_proxied

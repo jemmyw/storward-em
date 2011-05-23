@@ -4,7 +4,7 @@ module Storward
       include EventMachine::Deferrable
 
       attr_accessor :request
-      attr_accessor   :started_at
+      attr_accessor :started_at
 
       def initialize(request)
         begin
@@ -116,7 +116,6 @@ module Storward
 
     def to=(uri)
       @to = uri.dup
-      @to.path = path_info
     end
 
     def to_hash
@@ -154,10 +153,8 @@ module Storward
         :redirects => 0
       }
       request_options[:body] = content if method =~ /post|put/
-        uri = to.dup
-      uri.path = path_info
-
-      EventMachine::HttpRequest.new(uri).send(method, request_options).tap do |http|
+      
+      EventMachine::HttpRequest.new(self.to).send(method, request_options).tap do |http|
         http.callback do
           self.sent = true
           self.response_content = http.response
