@@ -3,3 +3,4 @@
 startmongo
 /config.rb
 cloudinit
+/storward.rb

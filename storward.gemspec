@@ -10,7 +10,7 @@ Gem::Specification.new do |s|
   s.homepage = 'http://github.com/jemmyw/storward'
   s.rubyforge_project = 'storward'
 
-  s.files      = Dir['lib/**/*']
+  s.files      = Dir['lib/**/*'] + Dir['lib/*']
   s.test_files = Dir['spec/integration/**/*']
 
   s.rdoc_options  = ["--charset=UTF-8"]
