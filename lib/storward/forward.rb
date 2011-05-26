@@ -23,7 +23,7 @@ module Storward
     end
 
     def method_match?(request_method)
-      methods.nil? || methods.empty? || methods.map(&:to_s).map(&:downcase).include?(request.method.to_s.downcase)
+      methods.nil? || methods.empty? || methods.map(&:to_s).map(&:downcase).include?(request_method.to_s.downcase)
     end
 
     def uri
