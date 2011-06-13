@@ -8,8 +8,10 @@ module Storward
     attr_reader :request, :response
 
     def initialize(matches, request, response)
+      @matches = matches
       @request = request
       @response = response
+      @config = Proc.new
 
       instance_exec *matches, &Proc.new
 

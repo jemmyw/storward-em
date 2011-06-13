@@ -24,7 +24,7 @@ module Storward
 
     def process_http_request
       response = EventMachine::DelegatedHttpResponse.new(self)
-      request = Request.new(@http_request_uri, @http_path_info, @http_request_method, @http_post_content, @http_content_type, @http_query_string)
+      request = Request.new(@http_request_uri, @http_path_info, @http_request_method, @http_headers, @http_post_content, @http_content_type, @http_query_string)
       request.received_at = Time.now
 
       forward = configuration.forwards.detect do |f|

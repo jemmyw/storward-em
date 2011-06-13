@@ -74,7 +74,7 @@ module Storward
       end
     end
 
-    ATTRIBUTES = [:request_uri, :path_info, :method, :content, :content_type, :query]
+    ATTRIBUTES = [:request_uri, :path_info, :method, :headers, :content, :content_type, :query]
     ATTRIBUTES.each{|a| attr_accessor a}
 
     attr_accessor :_id, :attempts, :sent, :to, :proxying, :worker_id, :response_content, :response_header, :response_status, :received_at
@@ -132,6 +132,16 @@ module Storward
                   else
                     {}
                   end
+    end
+
+    def header(name)
+      @parsed_headers ||= headers.split(/\n|\r|#{"\x00"}/).inject({}) do |m,n|
+        if n =~ /^(.*?):\s*(.*)$/
+          m[$1] = $2
+        end
+        m
+      end
+      @parsed_headers[name]
     end
 
     def to_hash
