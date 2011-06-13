@@ -1,0 +1,30 @@
+<html>
+  <head>
+    <title>Storward</title>
+
+    <style>
+      html, body, table {
+        font-family: sans, sans-serif;
+        font-size: 0.9em;
+      }
+
+      th, td {
+        border-collapse: collapse;
+      }
+
+      th {
+        border-bottom: 1px solid #cecece;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="hd">
+      <h1>Storward</h1>
+    </div>
+
+    <div id="bd">
+      <%= yield %>
+    </div>
+  </body>
+</html>

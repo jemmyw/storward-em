@@ -1,18 +1,10 @@
+require 'storward/handler'
+
 module Storward
-  class ForwardHandler
-    include EM::Deferrable
-    extend Property
-
-    attr_reader :request, :response
-
+  class ForwardHandler < Handler
     property :to, :proxy
 
-    def initialize(matches, request, response)
-      @request = request
-      @response = response
-
-      instance_exec *matches, &Proc.new
-
+    def handle_request
       @request_saved = false
       @request_proxied = false
 

@@ -1,14 +1,16 @@
 module Storward  
-  class Forward
+  class PathHandler
     extend Property
 
     attr_accessor :path
     attr_accessor :methods
     attr_accessor :config
+    attr_accessor :handler
 
-    def initialize(path, options = {})
+    def initialize(path, handler, options = {})
       self.path = path
-      self.methods = options.delete(:method).to_a
+      self.handler = handler
+      self.methods = [options.delete(:method)].to_a.flatten
       self.methods += options.delete(:methods).to_a
 
       self.config = Proc.new
@@ -32,7 +34,7 @@ module Storward
 
     def handle(request, response)
       matches = path.match(request.path_info).to_a[1..-1]
-      ForwardHandler.new(matches, request, response, &config)
+      handler.new(matches, request, response, &config)
     end
   end
 end

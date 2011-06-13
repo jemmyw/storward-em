@@ -5,11 +5,9 @@ require 'em-mongo'
 require 'addressable/uri'
 require 'logger'
 
-dir = File.join(File.dirname(__FILE__), 'storward')
-
-%w(property request forward forward_handler worker server config).each do |file|
-  require File.join(dir, file)
-end
+$: << File.dirname(__FILE__)
+require 'storward/server'
+require 'storward/worker'
 
 module Storward
   def run

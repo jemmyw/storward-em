@@ -1,0 +1,10 @@
+<h2>Request <%= @request['_id'] %></h2>
+
+<dl>
+  <% @request.each do |key, value| %>
+    <dt><%= key %></dt>
+    <dd><%= value %></dd>
+  <% end %>
+</dl>
+
+<a href="?">Back to list</a>

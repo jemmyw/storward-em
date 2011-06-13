@@ -1,3 +1,5 @@
+require 'storward/request'
+
 module Storward
   class Worker
     attr_accessor :running

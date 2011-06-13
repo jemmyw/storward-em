@@ -1,3 +1,10 @@
+require 'storward/property'
+require 'storward/path_handler'
+
+Dir[File.join(File.dirname(__FILE__), 'handlers', '*.rb')].each do |file|
+  require file
+end
+
 module Storward
   class Config
     extend Property
@@ -17,7 +24,15 @@ module Storward
     end
 
     def forward(path, options = {})
-      @forwards << Forward.new(path, options, &Proc.new)
+      handle(path, options.merge(:handler => ForwardHandler), &Proc.new)
+    end
+
+    def handle(path, options = {})
+      if block_given?
+        @forwards << PathHandler.new(path, options.delete(:handler), options, &Proc.new)
+      else
+        @forwards << PathHandler.new(path, options.delete(:handler), options){ }
+      end
     end
   end
 end

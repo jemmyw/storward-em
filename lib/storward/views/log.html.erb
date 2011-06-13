@@ -1,0 +1,43 @@
+<h2>Last 20 requests</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th> Received at </th>
+      <th> Path </th>
+      <th> Method </th>
+      <th> Status </th>
+      <th> Sent? </th>
+      <th> Attempts </th>
+      <th> &nbsp; </th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <% @requests.each do |request| %>
+      <tr>
+        <td>
+          <%= request['received_at'].strftime('%Y-%m-%d %H:%M') if request['received_at'] %>
+        </td>
+        <td>
+          <%= request['request_uri'] %>
+        </td>
+        <td>
+          <%= request['method'] %>
+        </td>
+        <td>
+          <%= request['response_status'] %>
+        </td>
+        <td>
+          <%= request['sent'] ? 'Yes' : 'No' %>
+        </td>
+        <td>
+          <%= request['attempts'] %>
+        </td>
+        <td>
+          <a href="?id=<%= request['_id'] %>">Details</a>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

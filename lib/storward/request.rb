@@ -1,3 +1,5 @@
+require 'storward/server'
+
 module Storward
   class Request
     class Saver
@@ -75,7 +77,7 @@ module Storward
     ATTRIBUTES = [:request_uri, :path_info, :method, :content, :content_type, :query]
     ATTRIBUTES.each{|a| attr_accessor a}
 
-    attr_accessor :_id, :attempts, :sent, :to, :proxying, :worker_id, :response_content, :response_header, :response_status
+    attr_accessor :_id, :attempts, :sent, :to, :proxying, :worker_id, :response_content, :response_header, :response_status, :received_at
 
     def initialize(*attributes)
       ATTRIBUTES.each_with_index do |name, index|
@@ -118,12 +120,26 @@ module Storward
       @to = uri.dup
     end
 
+    def params
+      @params ||= if query
+                    query.split('&').inject({}) do |m,n|
+                      pm = n.split('=')
+                      if pm.size == 2
+                        m[pm[0]] = pm[1]
+                      end
+                      m
+                    end
+                  else
+                    {}
+                  end
+    end
+
     def to_hash
       {}.tap do |hash|
         hash[:_id] = _id if _id
         hash[:to] = to.to_s
 
-        %w(attempts sent proxying worker_id response_content response_header response_status).each do |name|
+        %w(attempts sent proxying worker_id response_content response_header response_status received_at).each do |name|
           hash[name.to_sym] = self.send(name)
         end
 
@@ -141,6 +157,7 @@ module Storward
         request.to = Addressable::URI.parse(hash['to'])
         request.proxying = hash['proxying']
         request.worker_id = hash['worker_id']
+        request.received_at = hash['received_at']
       end
     end
 
