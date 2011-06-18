@@ -11,12 +11,12 @@ require 'storward/worker'
 
 module Storward
   def run
-    Signal.trap("TERM") do
-      EM.stop
-    end
-
     EventMachine::run do
+      Signal.trap("TERM") { EM.stop }
+      Signal.trap("QUIT") { EM.stop }
+
       EventMachine.epoll
+
       Storward::Server.run
       Storward::Worker.new.run
     end
@@ -29,7 +29,7 @@ module Storward
 
     if error
       logger.error error.to_s
-      logger.error error.backtrace.join("\n")
+      logger.error error.backtrace.join("\n") if error.backtrace
     end
   end
   module_function :log_error

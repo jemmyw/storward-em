@@ -9,12 +9,15 @@ module Storward
   class Config
     extend Property
 
-    property :mongo_host, :default => "localhost"
-    property :mongo_db,   :default => "storward"
+    property :couch_host, :default => "localhost"
+    property :couch_db,   :default => "storward"
+    property :couch_port, :default => 5984
+    
     property :port,       :default => 8081
 
     property :worker_log, :default => $stdout
     property :access_log, :default => $stdout
+    property :forward_log, :default => $stdout
 
     attr_reader :forwards
 
@@ -32,6 +35,12 @@ module Storward
         @forwards << PathHandler.new(path, options.delete(:handler), options, &Proc.new)
       else
         @forwards << PathHandler.new(path, options.delete(:handler), options){ }
+      end
+    end
+
+    def couchdb(&callback)
+      EM::CouchDB::Connection.new(:host => couch_host, :port => couch_port) do |cn|
+        cn.get_db(couch_db, true, &callback)
       end
     end
   end
