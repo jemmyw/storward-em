@@ -2,7 +2,7 @@ require 'storward/handler'
 
 module Storward
   class ForwardHandler < Handler
-    property :to, :proxy
+    property :to, :proxy, :fallback_response
 
     def handle_request
       @request_saved = false
@@ -21,7 +21,14 @@ module Storward
     def handler_event
       if @request_saved
         if !proxy?
-          @response.status = 200
+          if fallback_response
+            @response.status = fallback_response[:status] || 200
+            @response.content_type fallback_response[:content_type] || 'text/html'
+            @response.content = fallback_response[:body] || fallback_response[:content]
+          else
+            @response.status = 200
+          end
+
           self.succeed
         elsif @request_proxied
           request.proxying = false
