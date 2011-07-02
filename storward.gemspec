@@ -24,6 +24,5 @@ Gem::Specification.new do |s|
   s.add_dependency 'eventmachine', ['>= 0.12.10']
   s.add_dependency 'eventmachine_httpserver', ['>= 0.2.1']
   s.add_dependency 'em-http-request', ['~> 0.3.0']
-  s.add_dependency 'em-mongo', ['>= 0.3.6']
 end
 
