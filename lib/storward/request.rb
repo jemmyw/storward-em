@@ -8,6 +8,7 @@ module Storward
 
     attr_accessor :_id, :attempts, :sent, :to, :proxying, :worker_id, :response_content, :response_header, :response_status
     attr_accessor :content
+    attr_accessor :error_statuses
 
     def initialize(attributes = {})
       attributes.each do |key, value|
@@ -17,6 +18,7 @@ module Storward
 
       self.attempts = 0
       self.sent = false
+      self.error_statuses = []
     end
 
     def self.next_available(&callback)
@@ -98,7 +100,7 @@ module Storward
         hash[:_id] = _id if _id
         hash[:to] = to.to_s
 
-        %w(attempts sent proxying worker_id response_header response_status received_at).each do |name|
+        %w(attempts sent proxying worker_id response_header response_status received_at error_statuses).each do |name|
           hash[name.to_sym] = self.send(name)
         end
 
@@ -121,6 +123,7 @@ module Storward
         request.proxying = hash['proxying']
         request.worker_id = hash['worker_id']
         request.received_at = hash['received_at']
+        request.error_statuses = hash['error_statuses']
       end
     end
 
@@ -141,27 +144,38 @@ module Storward
       request_options[:body] = content if method =~ /post|put/
               
       Storward.logger("forward").info "Forwarding #{method} to #{to}#{path_info} with body of length #{content.length}"
-      
-      EventMachine::HttpRequest.new(self.to).send(method, request_options).tap do |http|
-        http.callback do
-          Storward.logger("forward").info(%Q{Successful forward #{method} to #{to}#{path_info} #{query} Status: #{http.response_header.status}})
 
+      df = DefaultDeferrable.new
+      
+      http = EventMachine::HttpRequest.new(self.to).send(method, request_options)
+      http.callback do
+        self.response_content = http.response
+        self.response_header = http.response_header
+        self.response_status = http.response_header.status
+
+        if error_statuses.map(&:to_s).include?(http.response_header.status.to_s)
+          Storward.logger("forward").info(%Q{Unsuccessful forward #{method} to #{to}#{path_info} #{query} Status: #{http.response_header.status}})
+          df.fail http
+        else
+          Storward.logger("forward").info(%Q{Successful forward #{method} to #{to}#{path_info} #{query} Status: #{http.response_header.status}})
           self.sent = true
+          df.succeed http
+        end
+      end
+      http.errback do
+        Storward.logger("forward").error(%Q{Unsuccessful forward #{method} to #{to}#{path_info}})
+
+        begin
           self.response_content = http.response
           self.response_header = http.response_header
           self.response_status = http.response_header.status
-        end
-        http.errback do
-          Storward.logger("forward").error(%Q{Unsuccessful forward #{method} to #{to}#{path_info}})
-
-          begin
-            self.response_content = http.response
-            self.response_header = http.response_header
-            self.response_status = http.response_header.status
-          rescue Exception => e
-          end
+        rescue Exception => e
+        ensure
+          df.fail http
         end
       end
+
+      df
     end
 
     def save(options = {})

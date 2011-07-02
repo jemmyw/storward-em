@@ -7,10 +7,10 @@ module Storward
   # proxy => if true then the request will be forwarded and the response returned. 
   #   Otherwise the request will be saved and forwarded in the background
   # fallback_response => The response to send when not proxying or when an error is handled
-  # fallback_on_errors => Array of HTTP status errors to consider network errors
+  # error_statuses => Array of HTTP status errors to consider network errors
   class ForwardHandler < Handler
     property :to, :proxy, :fallback_response
-    property :fallback_errors, :default => []
+    property :error_statuses, :default => []
 
     def handle_request
       @request_saved = false
@@ -29,15 +29,8 @@ module Storward
     def handler_event
       if @request_saved
         if !proxy?
-          if fallback_response
-            @response.status = fallback_response[:status] || 200
-            @response.content_type fallback_response[:content_type] || 'text/html'
-            @response.content = fallback_response[:body] || fallback_response[:content]
-          else
-            @response.status = 200
-          end
-
-          self.succeed
+          fallback_response ||= {:status => 200}
+          fallback
         elsif @request_proxied
           request.proxying = false
           request.save.tap do |saver|
@@ -47,13 +40,34 @@ module Storward
         elsif @request_not_proxied
           request.proxying = false
           request.save.tap do |saver|
-            saver.callback { self.fail(["Request could not be proxied but was saved", @request_not_proxied]) }
-            saver.errback  {|error| self.fail(["Request could not be proxied, was saved but not updated, needs manual intervention", error])}
+            saver.callback do
+              if fallback?
+                fallback
+              else
+                self.fail(["Request could not be proxied but was saved", @request_not_proxied])
+              end
+            end
+            saver.errback do |error| 
+              self.fail(["Request could not be proxied, was saved but not updated, needs manual intervention", error])
+            end
           end
         end
       elsif @request_not_saved
         self.fail(["Request could not be saved", @request_not_saved])
       end
+    end
+
+    # Is there a fallback
+    def fallback?
+      fallback_response
+    end
+
+    # Fill in the response from the fallback and succeed
+    def fallback
+      @response.status = fallback_response[:status] || 200
+      @response.content_type fallback_response[:content_type] || 'text/html'
+      @response.content = fallback_response[:body] || fallback_response[:content] || ""
+      self.succeed
     end
 
     def save_request
@@ -69,24 +83,18 @@ module Storward
     end
 
     def proxy_request
-      http = request.forward
+      request.error_statuses = self.error_statuses if self.error_statuses
+      request_http = request.forward
 
-      http.callback do
-        if fallback_errors && fallback_errors.map(&:to_s).include?(http.response_header.status.to_s)
-          @request_proxied = false
-          self.proxy = false
-          request.sent = false
-          save_request
-        else
-          @response.status = http.response_header.status
-          @response.content_type http.response_header['CONTENT_TYPE']
-          @response.headers["Location"] = http.response_header['LOCATION'] if http.response_header['LOCATION']
-          @response.content = http.response
-          @request_proxied = true
-          handler_event
-        end
+      request_http.callback do |http|
+        @response.status = http.response_header.status
+        @response.content_type http.response_header['CONTENT_TYPE']
+        @response.headers["Location"] = http.response_header['LOCATION'] if http.response_header['LOCATION']
+        @response.content = http.response
+        @request_proxied = true
+        handler_event
       end
-      http.errback do
+      request_http.errback do |http|
         @request_not_proxied = true
         handler_event
       end
