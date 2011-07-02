@@ -1,8 +1,16 @@
 require 'storward/handler'
 
 module Storward
+  # Forward handler for forwarding requests
+  #
+  # to => the full URL to forward the request to
+  # proxy => if true then the request will be forwarded and the response returned. 
+  #   Otherwise the request will be saved and forwarded in the background
+  # fallback_response => The response to send when not proxying or when an error is handled
+  # fallback_on_errors => Array of HTTP status errors to consider network errors
   class ForwardHandler < Handler
     property :to, :proxy, :fallback_response
+    property :fallback_errors, :default => []
 
     def handle_request
       @request_saved = false
@@ -64,12 +72,19 @@ module Storward
       http = request.forward
 
       http.callback do
-        @response.status = http.response_header.status
-        @response.content_type http.response_header['CONTENT_TYPE']
-        @response.headers["Location"] = http.response_header['LOCATION'] if http.response_header['LOCATION']
-        @response.content = http.response
-        @request_proxied = true
-        handler_event
+        if fallback_errors && fallback_errors.map(&:to_s).include?(http.response_header.status.to_s)
+          @request_proxied = false
+          self.proxy = false
+          request.sent = false
+          save_request
+        else
+          @response.status = http.response_header.status
+          @response.content_type http.response_header['CONTENT_TYPE']
+          @response.headers["Location"] = http.response_header['LOCATION'] if http.response_header['LOCATION']
+          @response.content = http.response
+          @request_proxied = true
+          handler_event
+        end
       end
       http.errback do
         @request_not_proxied = true
