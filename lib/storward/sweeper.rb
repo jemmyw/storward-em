@@ -16,7 +16,7 @@ module Storward
       Storward::Server.configuration.couchdb do |db|
         cm = db.create_view("requests", "sweepable", %Q|
           function(doc) {
-            if(doc.received_at && !doc.sent && !doc.proxying && !doc.worker_id) {
+            if(doc.received_at && doc.sent) {
               emit(doc.received_at, doc);
             }
           }|)
