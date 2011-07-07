@@ -4,6 +4,10 @@ module Storward
   class Worker
     attr_accessor :running
 
+    def self.run
+      new.run
+    end
+
     def run
       self.running = true
       

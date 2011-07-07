@@ -18,6 +18,7 @@ module Storward
     property :worker_log, :default => $stdout
     property :access_log, :default => $stdout
     property :forward_log, :default => $stdout
+    property :sweeper_log, :default => $stdout
 
     attr_reader :forwards
 
@@ -40,7 +41,10 @@ module Storward
 
     def couchdb(&callback)
       EM::CouchDB::Connection.new(:host => couch_host, :port => couch_port) do |cn|
-        cn.get_db(couch_db, true, &callback)
+        cm = cn.get_db(couch_db, true, &callback)
+        cm.errback do
+          raise "Could not connect to CouchDB"
+        end
       end
     end
   end

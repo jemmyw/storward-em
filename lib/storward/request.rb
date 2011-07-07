@@ -100,9 +100,11 @@ module Storward
         hash[:_id] = _id if _id
         hash[:to] = to.to_s
 
-        %w(attempts sent proxying worker_id response_header response_status received_at error_statuses).each do |name|
+        %w(attempts sent proxying worker_id response_header response_status error_statuses).each do |name|
           hash[name.to_sym] = self.send(name)
         end
+
+        hash['received_at'] = self.received_at.to_i
 
         ATTRIBUTES.each do |a|
           hash[a] = self.send(a)
@@ -122,7 +124,15 @@ module Storward
         request.to = Addressable::URI.parse(hash['to'])
         request.proxying = hash['proxying']
         request.worker_id = hash['worker_id']
-        request.received_at = hash['received_at']
+
+        if hash['received_at'].is_a?(Time)
+          request.received_at = hash['received_at']
+        elsif hash['received_at'].is_a?(String)
+          request.received_at = Time.parse(hash['received_at'])
+        else
+          request.received_at = Time.at(hash['received_at'])
+        end
+
         request.error_statuses = hash['error_statuses']
       end
     end

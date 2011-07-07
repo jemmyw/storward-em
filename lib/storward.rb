@@ -1,13 +1,13 @@
 require 'eventmachine'
 require 'evma_httpserver'
 require 'em-http'
-require 'em-mongo'
 require 'addressable/uri'
 require 'logger'
 
 $: << File.dirname(__FILE__)
 require 'storward/server'
 require 'storward/worker'
+require 'storward/sweeper'
 
 module Storward
   def run
@@ -18,7 +18,8 @@ module Storward
       EventMachine.epoll
 
       Storward::Server.run
-      Storward::Worker.new.run
+      Storward::Worker.run
+      Storward::Sweeper.run
     end
   end
   module_function :run
