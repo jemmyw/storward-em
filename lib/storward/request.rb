@@ -145,7 +145,7 @@ module Storward
               
       Storward.logger("forward").info "Forwarding #{method} to #{to}#{path_info} with body of length #{content.length}"
 
-      df = DefaultDeferrable.new
+      df = EM::DefaultDeferrable.new
       
       http = EventMachine::HttpRequest.new(self.to).send(method, request_options)
       http.callback do
