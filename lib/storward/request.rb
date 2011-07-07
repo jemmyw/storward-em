@@ -104,11 +104,11 @@ module Storward
           hash[name.to_sym] = self.send(name)
         end
 
-        hash['received_at'] = self.received_at.to_i
-
         ATTRIBUTES.each do |a|
           hash[a] = self.send(a)
         end
+
+        hash['received_at'] = self.received_at.to_i
       end
     end
 
