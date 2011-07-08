@@ -1,3 +1,4 @@
+require 'storward/config'
 require 'storward/request'
 
 module Storward
@@ -7,13 +8,13 @@ module Storward
     end
 
     def initialize
-      EM::PeriodicTimer.new(3600) { run }
+      EM::PeriodicTimer.new(Config.sweeper_delay) { run }
       run
     end
 
     def run
-      Storward.logger("sweeper").info("Starting sweep")
-      Storward::Server.configuration.couchdb do |db|
+      Storward.logger("sweeper").info("Starting sweeper, delay #{Config.sweeper_delay}")
+      Config.couchdb do |db|
         cm = db.create_view("requests", "sweepable", %Q|
           function(doc) {
             if(doc.received_at && doc.sent) {
@@ -28,7 +29,7 @@ module Storward
     end
 
     def sweep
-      Storward::Server.configuration.couchdb do |db|
+      Config.couchdb do |db|
         time = Time.now - (60*60*24*7)
         cm = db.execute_view("requests", "sweepable", :endkey => time.to_i, :map_docs => true)
         cm.callback do |docs|

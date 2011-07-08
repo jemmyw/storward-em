@@ -8,14 +8,14 @@ module Storward
     def self.run
       EventMachine::start_server("0.0.0.0", configuration.port, self)
       Storward.logger("access").info "Listening on 0.0.0.0:#{configuration.port}"
+
+      configuration.forwards.each do |handler|
+        Storward.logger("access").debug "Handler at #{handler.path}"
+      end
     end      
 
-    def self.configure
-      @configuration = Config.new(&Proc.new)
-    end
-
     def self.configuration
-      @configuration
+      Storward::Config.configuration
     end
 
     def configuration

@@ -5,6 +5,7 @@ require 'addressable/uri'
 require 'logger'
 
 $: << File.dirname(__FILE__)
+require 'storward/config'
 require 'storward/server'
 require 'storward/worker'
 require 'storward/sweeper'
@@ -12,8 +13,8 @@ require 'storward/sweeper'
 module Storward
   def run
     EventMachine::run do
-      Signal.trap("TERM") { EM.stop }
-      Signal.trap("QUIT") { EM.stop }
+      Signal.trap("TERM") { Storward.stop }
+      Signal.trap("INT") { Storward.stop }
 
       EventMachine.epoll
 
@@ -23,6 +24,12 @@ module Storward
     end
   end
   module_function :run
+
+  def stop
+    logger("access").info("Stopping...")
+    EM.stop
+  end
+  module_function :stop
 
   def log_error(log_type, message, error)
     logger = Storward.logger(log_type)
@@ -36,7 +43,17 @@ module Storward
   module_function :log_error
 
   def logger(log_type)
-    Logger.new(Storward::Server.configuration.send("#{log_type}_log") || $stdout)
+    Logger.new(Storward::Config.send("#{log_type}_log") || $stdout)
   end
   module_function :logger
+
+  def configure
+    Storward::Config.configure(&Proc.new)
+  end
+  module_function :configure
+
+  def configuration
+    Storward::Config.configuration
+  end
+  module_function :configuration
 end

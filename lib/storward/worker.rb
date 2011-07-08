@@ -1,3 +1,4 @@
+require 'storward/config'
 require 'storward/request'
 
 module Storward
@@ -5,13 +6,22 @@ module Storward
     attr_accessor :running
 
     def self.run
-      new.run
+      new
+    end
+
+    def worker_delay
+      Storward::Config.worker_delay
+    end
+
+    def initialize
+      Storward.logger("worker").info("Starting worker, delay #{worker_delay}")
+      run 
     end
 
     def run
       self.running = true
-      
-      Storward::Server.configuration.couchdb do |db|
+
+      Storward::Config.couchdb do |db|
         cm = db.create_view("requests", "next_available", %Q|
           function(doc) {
             if(doc.received_at && !doc.sent && !doc.proxying && !doc.worker_id) {
@@ -37,7 +47,7 @@ module Storward
 
     def run_next
       if running
-        EM::Timer.new(5) { run }
+        EM::Timer.new(worker_delay) { run }
       end
     end
 

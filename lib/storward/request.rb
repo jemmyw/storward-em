@@ -1,3 +1,4 @@
+require 'storward/config'
 require 'storward/server'
 require 'storward/request_saver'
 
@@ -48,8 +49,7 @@ module Storward
     end
 
     def self.next_available(&callback)
-      conf = Storward::Server.configuration
-      conf.couchdb do |db|
+      Config.couchdb do |db|
         cm = db.execute_view("requests", "next_available", :limit => 1, :map_docs => true)
         cm.callback do |docs|
           doc = docs["rows"].first

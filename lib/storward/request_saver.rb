@@ -14,7 +14,7 @@ module Storward
         self.started_at = Time.now
         self.request = request
 
-        conf = Storward::Server.configuration
+        conf = Storward.configuration
 
         EM::CouchDB::Connection.new(:host => conf.couch_host, :port => conf.couch_port) do |cn|
           cmdb = cn.get_db(conf.couch_db || "storward", true) do |db|

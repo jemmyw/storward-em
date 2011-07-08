@@ -20,7 +20,27 @@ module Storward
     property :forward_log, :default => $stdout
     property :sweeper_log, :default => $stdout
 
+    property :worker_delay, :default => 5
+
+    property :sweeper_delay, :default => 3600
+
     attr_reader :forwards
+
+    def self.configure
+      @configuration = new(&Proc.new)
+    end
+
+    def self.configuration
+      @configuration
+    end
+
+    def self.method_missing(method, *args)
+      if args.empty?
+        configuration.send(method)
+      else
+        super
+      end
+    end
 
     def initialize
       @forwards = []
