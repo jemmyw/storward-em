@@ -21,6 +21,32 @@ module Storward
       self.error_statuses = []
     end
 
+    def self.request_from_document(doc)
+      df = EM::DefaultDeferrable.new
+      request = Request.from_hash(doc)
+
+      if attachment = doc.attachments['content']
+        acm = attachment.read do |content|
+          request.content = content
+
+          if attachment = doc.attachments['response_content']
+            acm2 = attachment.read do |content|
+              request.response_content = content
+              df.succeed(request)
+            end
+            acm2.errback { df.succeed(request) }
+          else
+            df.succeed(request)
+          end
+        end
+        acm.errback { df.fail("Could not read attachment for #{doc.id}") }
+      else
+        df.succeed(request)
+      end
+
+      df
+    end
+
     def self.next_available(&callback)
       conf = Storward::Server.configuration
       conf.couchdb do |db|
@@ -28,25 +54,9 @@ module Storward
         cm.callback do |docs|
           doc = docs["rows"].first
           if doc
-            request = Request.from_hash(doc)
-            if attachment = doc.attachments['content']
-              acm = attachment.read do |content|
-                request.content = content
-
-                if attachment = doc.attachments['response_content']
-                  acm2 = attachment.read do |content|
-                    request.response_content = content
-                    yield request
-                  end
-                  acm2.errback { yield request }
-                else
-                  yield request
-                end
-              end
-              acm.errback { raise "Could not read attachment for #{doc.id}" }
-            else
-              yield request
-            end
+            df = request_from_document(doc)
+            df.callback(&callback)
+            df.errback{|error| raise error }
           else
             yield nil
           end
