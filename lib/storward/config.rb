@@ -34,12 +34,8 @@ module Storward
       @configuration
     end
 
-    def self.method_missing(method, *args)
-      if args.empty?
-        configuration.send(method)
-      else
-        super
-      end
+    def self.method_missing(method, *args, &block)
+      configuration.send(method, *args, &block)
     end
 
     def initialize
@@ -59,9 +55,9 @@ module Storward
       end
     end
 
-    def couchdb(&callback)
+    def couchdb
       EM::CouchDB::Connection.new(:host => couch_host, :port => couch_port) do |cn|
-        cm = cn.get_db(couch_db, true, &callback)
+        cm = cn.get_db(couch_db, true, &Proc.new)
         cm.errback do
           raise "Could not connect to CouchDB"
         end

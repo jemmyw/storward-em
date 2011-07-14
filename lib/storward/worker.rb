@@ -31,7 +31,7 @@ module Storward
         cm.callback { run_worker }
         cm.errback do
           self.running = false
-          raise "Could not create next_available view"
+          Storward.logger("worker").error("Could not create next_available view")
         end
       end
     end
@@ -59,10 +59,14 @@ module Storward
   class WorkerRunner
     include EventMachine::Deferrable
 
+    def worker_id
+      self.object_id
+    end
+
     def initialize
       Request.next_available do |request|
         if request
-          request.save(:lock => self.object_id).tap do |saver|
+          request.save(:lock => worker_id).tap do |saver|
             saver.callback do
               http = request.forward
 
