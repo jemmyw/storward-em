@@ -163,7 +163,7 @@ module Storward
       }
       request_options[:body] = content if method =~ /post|put/
               
-      Storward.logger("forward").info "Forwarding #{method} to #{to}#{path_info} with body of length #{content.length}"
+      Storward.logger("forward").info "Forwarding #{method} to #{to} with body of length #{content.length}"
 
       df = EM::DefaultDeferrable.new
       
@@ -174,16 +174,16 @@ module Storward
         self.response_status = http.response_header.status
 
         if error_statuses.map(&:to_s).include?(http.response_header.status.to_s)
-          Storward.logger("forward").info(%Q{Unsuccessful forward #{method} to #{to}#{path_info} #{query} Status: #{http.response_header.status}})
+          Storward.logger("forward").info(%Q{Unsuccessful forward #{method} to #{to} #{query} Status: #{http.response_header.status}})
           df.fail http
         else
-          Storward.logger("forward").info(%Q{Successful forward #{method} to #{to}#{path_info} #{query} Status: #{http.response_header.status}})
+          Storward.logger("forward").info(%Q{Successful forward #{method} to #{to} #{query} Status: #{http.response_header.status}})
           self.sent = true
           df.succeed http
         end
       end
       http.errback do
-        Storward.logger("forward").error(%Q{Unsuccessful forward #{method} to #{to}#{path_info}})
+        Storward.logger("forward").error(%Q{Unsuccessful forward #{method} to #{to}})
         Storward.logger("forward").error("  Error: #{http.error.inspect}")
 
         begin
