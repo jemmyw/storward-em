@@ -7,7 +7,8 @@ module Storward
     ATTRIBUTES = [:request_uri, :path_info, :method, :headers, :content_type, :query, :received_at]
     ATTRIBUTES.each{|a| attr_accessor a}
 
-    attr_accessor :_id, :attempts, :sent, :to, :proxying, :worker_id, :response_content, :response_header, :response_status
+    attr_accessor :_id, :sent, :to, :proxying, :worker_id, :response_content, :response_header, :response_status
+    attr_accessor :attempts
     attr_accessor :timeout
     attr_accessor :content
     attr_accessor :error_statuses
@@ -18,7 +19,7 @@ module Storward
         self.send("#{key}=", value.dup) if value
       end
 
-      self.attempts = 0
+      self.attempts = []
       self.sent = false
       self.error_statuses = []
     end
@@ -111,7 +112,7 @@ module Storward
         hash[:_id] = _id if _id
         hash[:to] = to.to_s
 
-        %w(attempts sent proxying worker_id response_header response_status error_statuses).each do |name|
+        %w(sent proxying worker_id response_header response_status error_statuses).each do |name|
           hash[name.to_sym] = self.send(name)
         end
 
@@ -121,6 +122,7 @@ module Storward
 
         hash['received_at'] = self.received_at.to_i
         hash['timeout'] = self.timeout.to_i
+        hash['attempts'] = self.attempts
       end
     end
 
@@ -131,13 +133,18 @@ module Storward
         end
 
         request._id = hash['_id']
-        request.attempts = hash['attempts'] || 0
         request.sent = hash['sent']
         request.to = Addressable::URI.parse(hash['to'])
         request.proxying = hash['proxying']
         request.worker_id = hash['worker_id']
         request.timeout = hash['timeout']
-
+       
+        if hash['attempts'].is_a?(Array)
+          request.attempts = hash['attempts']
+        else
+          request.attempts = []
+        end
+        
         if hash['received_at'].is_a?(Time)
           request.received_at = hash['received_at']
         elsif hash['received_at'].is_a?(String)
@@ -157,7 +164,7 @@ module Storward
     end
 
     def forward
-      self.attempts += 1
+      self.attempts << Time.now.to_i
 
       request_options = {
         :head => {'Content-Type' => content_type},
