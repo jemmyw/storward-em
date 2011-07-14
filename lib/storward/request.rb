@@ -184,6 +184,7 @@ module Storward
       end
       http.errback do
         Storward.logger("forward").error(%Q{Unsuccessful forward #{method} to #{to}#{path_info}})
+        Storward.logger("forward").error("  Error: #{http.error.inspect}")
 
         begin
           self.response_content = http.response
