@@ -8,6 +8,7 @@ module Storward
     ATTRIBUTES.each{|a| attr_accessor a}
 
     attr_accessor :_id, :attempts, :sent, :to, :proxying, :worker_id, :response_content, :response_header, :response_status
+    attr_accessor :timeout
     attr_accessor :content
     attr_accessor :error_statuses
 
@@ -119,6 +120,7 @@ module Storward
         end
 
         hash['received_at'] = self.received_at.to_i
+        hash['timeout'] = self.timeout.to_i
       end
     end
 
@@ -134,6 +136,7 @@ module Storward
         request.to = Addressable::URI.parse(hash['to'])
         request.proxying = hash['proxying']
         request.worker_id = hash['worker_id']
+        request.timeout = hash['timeout']
 
         if hash['received_at'].is_a?(Time)
           request.received_at = hash['received_at']

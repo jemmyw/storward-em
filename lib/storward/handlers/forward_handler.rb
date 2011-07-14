@@ -10,6 +10,7 @@ module Storward
   # error_statuses => Array of HTTP status errors to consider network errors
   class ForwardHandler < Handler
     property :to, :proxy, :fallback_response
+    property :timeout, :default => 30
     property :error_statuses, :default => []
 
     def handle_request
@@ -20,6 +21,7 @@ module Storward
       @request_not_proxied = false
 
       @request.to = Addressable::URI.parse(self.to)
+      @request.timeout = timeout
       @request.proxying = proxy?
 
       save_request
