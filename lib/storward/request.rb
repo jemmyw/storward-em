@@ -169,7 +169,8 @@ module Storward
       request_options = {
         :head => {'Content-Type' => content_type},
         :query => query,
-        :redirects => 0
+        :redirects => 0,
+        :timeout => timeout || 30
       }
       request_options[:body] = content if method =~ /post|put/
               
