@@ -28,7 +28,7 @@ module Storward
               emit(doc.received_at, doc);
             }
           }|)
-        cm.callback { run_worker }
+        cm.callback { run_next }
         cm.errback do
           self.running = false
           Storward.logger("worker").error("Could not create next_available view")
@@ -36,18 +36,16 @@ module Storward
       end
     end
 
-    def run_worker
-      worker = WorkerRunner.new
-      worker.callback { run_next }
-      worker.errback do |message, error| 
-        Storward.log_error("worker", message, error)
-        run_next
-      end
-    end
-
     def run_next
       if running
-        EM::Timer.new(worker_delay) { run }
+        EM::Timer.new(worker_delay) do
+          worker = WorkerRunner.new
+          worker.callback { run_next }
+          worker.errback do |message, error| 
+            Storward.log_error("worker", message, error)
+            run_next
+          end
+        end
       end
     end
 
