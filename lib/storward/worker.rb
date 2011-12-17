@@ -25,7 +25,13 @@ module Storward
         cm = db.create_view("requests", "next_available", %Q|
           function(doc) {
             if(doc.received_at && !doc.sent && !doc.proxying && !doc.worker_id) {
-              emit(doc.received_at, doc);
+              if(doc.try_again_at) {
+                if(doc.try_again_at*1000 > (new Date()).valueOf()) {
+                  emit(doc.received_at, doc);
+                }
+              } else {
+                emit(doc.received_at, doc);
+              }
             }
           }|)
         cm.callback { run_next }

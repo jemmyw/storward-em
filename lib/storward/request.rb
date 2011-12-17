@@ -9,6 +9,7 @@ module Storward
 
     attr_accessor :_id, :sent, :to, :proxying, :worker_id, :response_content, :response_header, :response_status
     attr_accessor :attempts
+    attr_accessor :try_again_at
     attr_accessor :timeout
     attr_accessor :content
     attr_accessor :error_statuses
@@ -123,6 +124,7 @@ module Storward
         hash['received_at'] = self.received_at.to_i
         hash['timeout'] = self.timeout.to_i
         hash['attempts'] = self.attempts
+        hash['try_again_at'] = self.try_again_at.to_i
       end
     end
 
@@ -138,6 +140,7 @@ module Storward
         request.proxying = hash['proxying']
         request.worker_id = hash['worker_id']
         request.timeout = hash['timeout']
+        request.try_again_at = hash['try_again_at'].to_i
        
         if hash['attempts'].is_a?(Array)
           request.attempts = hash['attempts']
@@ -165,6 +168,7 @@ module Storward
 
     def forward
       self.attempts << Time.now.to_i
+      self.try_again_at = Time.now.to_i + ((1000*60)*self.attempts.size*self.attempts.size)
 
       request_options = {
         :head => {'Content-Type' => content_type},
